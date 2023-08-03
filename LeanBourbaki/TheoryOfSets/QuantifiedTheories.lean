@@ -302,7 +302,7 @@ theorem TypicalForall.cond_imp {p q r: α → Prop} (h : ∀ x, p x → q x → 
   rw [TypicalForall.iff_forall, TypicalForall.iff_forall]
   apply forall_imp
   intro x h2 h3
-  exact 
+  exact h x h3 (h2 h3)
 
 
 /-- C39 c
