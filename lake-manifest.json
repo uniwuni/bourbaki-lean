@@ -2,6 +2,36 @@
  "packagesDir": "lake-packages",
  "packages":
  [{"git":
+   {"url": "https://github.com/xubaiw/CMark.lean",
+    "subDir?": null,
+    "rev": "0077cbbaa92abf855fc1c0413e158ffd8195ec77",
+    "name": "CMark",
+    "inputRev?": "main"}},
+  {"git":
+   {"url": "https://github.com/leanprover/doc-gen4",
+    "subDir?": null,
+    "rev": "e09280bb3c0548135c8c002bf59b4ea807744314",
+    "name": "doc-gen4",
+    "inputRev?": "main"}},
+  {"git":
+   {"url": "https://github.com/mhuisi/lean4-cli",
+    "subDir?": null,
+    "rev": "5a858c32963b6b19be0d477a30a1f4b6c120be7e",
+    "name": "Cli",
+    "inputRev?": "nightly"}},
+  {"git":
+   {"url": "https://github.com/hargonix/LeanInk",
+    "subDir?": null,
+    "rev": "2447df5cc6e48eb965c3c3fba87e46d353b5e9f1",
+    "name": "leanInk",
+    "inputRev?": "doc-gen"}},
+  {"git":
+   {"url": "https://github.com/fgdorais/lean4-unicode-basic",
+    "subDir?": null,
+    "rev": "f09250282cea3ed8c010f430264d9e8e50d7bc32",
+    "name": "UnicodeBasic",
+    "inputRev?": "main"}},
+  {"git":
    {"url": "https://github.com/leanprover/std4",
     "subDir?": null,
     "rev": "7601c54efadd70b688a163f5dcc11ae0ccdf7621",
