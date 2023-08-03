@@ -379,3 +379,51 @@ theorem imp_and_iff_and_iff {p q r : Prop}:
     exact And.intro (And.left ∘ x) (And.right ∘ x)
   · intro x y
     exact And.intro (x.left y) (x.right y)
+
+/- ## Exercises Chapter 1 
+   ### § 3
+-/
+/-- 1 a
+-/
+example: p → (q → p) := λ x _ ↦ x
+/-- 1 b
+-/
+example: (p → q) → (q → r) → p → r := Function.flip_comp
+/-- 1 c
+-/
+example: p → ¬p → q := absurd
+/-- 1 d
+-/
+theorem Or.iff_imp_imp_self: (p ∨ q) ↔ ((p → q) → q) := by
+  constructor
+  · intro h1 h2
+    apply Or.elim h1
+    · exact h2
+    · exact id    
+  · intro h
+    apply Or.elim (Classical.em p)
+    · exact Or.inl
+    · intro np
+      exact Or.inr (h (λ x ↦ absurd x np))
+      
+/-- 1 e
+-/
+theorem Iff.iff_both_or_neither: (p ↔ q) ↔ ((p ∧ q) ∨ (¬p ∧ ¬ q)) := by
+  constructor
+  · intro h
+    apply Or.elim (Classical.em p)
+    · intro h1
+      exact Or.inl (And.intro h1 (h.mp h1))
+    · intro h1
+      have h2 := Iff.cong_not h
+      exact Or.inr (And.intro h1 (h2.mp h1))
+  · intro a
+    apply Or.elim a 
+    · intro b
+      exact Iff.intro
+            (Function.const _ b.right) (Function.const _ b.left)
+    · intro b
+      rw [← @Iff.notnot p, ← @Iff.notnot q]
+      apply Iff.cong_not
+      apply Iff.intro
+            (Function.const _ b.right) (Function.const _ b.left)
