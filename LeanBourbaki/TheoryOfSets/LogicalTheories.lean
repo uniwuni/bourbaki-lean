@@ -371,3 +371,13 @@ theorem not_or_iff_and_not_pred {p q : α → Prop}:
   (λ x ↦ (¬ (p x ∨ q x))) = (λ x ↦ (¬ p x ∧ ¬ q x)) := by
   funext x
   rw [← @Iff.notnot (¬ p x ∧ ¬ q x), Or.iff_not_and_not]
+
+theorem imp_and_iff_and_iff {p q r : Prop}:
+  (p → (q ∧ r)) ↔ ((p → q) ∧ (p → r)) := by
+  constructor
+  · intro x 
+    exact And.intro (And.left ∘ x) (And.right ∘ x)
+  · intro x y
+    exact And.intro (x.left y) (x.right y)
+
+theorem 

@@ -204,3 +204,275 @@ def exists_forall_to_forall_exists {p : α → β → Prop} :
   (∃ x, ∀ y, p x y) → ∀ y, ∃ x, p x y := by
   rintro ⟨x, h⟩ y
   exact Exists.intro _ (h y)
+
+/-
+### Typical Quantifiers
+-/
+
+/-- CF12 a
+-/
+def TypicalExists (p q : α → Prop) := ∃ x, p x ∧ q x 
+
+/-- CF12 b
+-/
+def TypicalForall (p q : α → Prop) := ¬ (TypicalExists p (Not ∘ q))
+
+/-- C35
+-/
+theorem TypicalForall.iff_forall {p q : α → Prop} :
+  TypicalForall p q ↔ ∀ x, p x → q x := by
+    unfold TypicalForall TypicalExists
+    conv =>
+      lhs
+      congr
+      congr
+      intro x
+      simp
+      rw [And.iff_not_right]
+    rw [forall_iff_not_exists_not]
+    exact Iff.refl _
+
+/-- C36
+-/
+theorem TypicalForall.intro {p q : α → Prop} (h : ∀ x, p x → q x)
+  : TypicalForall p q := TypicalForall.iff_forall.mpr h
+
+
+/-- helper
+-/
+theorem TypicalForall.apply {p q : α → Prop} (h : TypicalForall p q)
+  (h2 : p x) : q x := by
+  rw [TypicalForall.iff_forall] at h
+  exact h _ h2
+
+/-- helper
+-/
+
+theorem TypicalExists.intro {p q : α → Prop} (h1 : p x) (h2 : q x)
+  : TypicalExists p q := Exists.intro x (And.intro h1 h2)
+
+/-- C37
+-/
+theorem TypicalForall.byContradiction {p q : α → Prop} (h : ∀ x, ¬ (p x ∧ ¬ q x)) :
+  TypicalForall p q := by
+  apply intro
+  conv at h =>
+    intro x
+    rw [And.iff_not_right, Iff.notnot]
+    rfl
+  exact h
+
+/-- C38 a
+-/
+
+theorem not_tforall_iff_texists_not {p q: α → Prop} :
+  ¬ (TypicalForall p q) ↔ TypicalExists p (Not ∘ q) := by
+  unfold TypicalForall TypicalExists
+  exact Iff.notnot
+
+/-- C38 b
+-/
+theorem not_texists_iff_tforall_not {p q: α → Prop} :
+  ¬ (TypicalExists p q) ↔ TypicalForall p (Not ∘ q) := by
+  unfold TypicalForall TypicalExists Function.comp
+  simp [Iff.notnot]
+
+/-- C38 b helper
+-/
+theorem TypicalExists.iff_not_tforall_not {p q: α → Prop} :
+  TypicalExists p q ↔ ¬ TypicalForall p (Not ∘ q) := by
+  rw [← @Iff.notnot (TypicalExists p q), not_texists_iff_tforall_not]
+  exact Iff.refl _
+
+/-- C39 a 
+-/
+
+theorem TypicalExists.cond_imp {p q r: α → Prop} (h : ∀ x, p x → q x → r x) :
+  TypicalExists p q → TypicalExists p r := by
+  unfold TypicalExists
+  apply Exists.imp
+  intro x h2
+  exact And.intro h2.left (h x h2.left h2.right)
+
+/-- C39 b
+-/
+
+theorem TypicalForall.cond_imp {p q r: α → Prop} (h : ∀ x, p x → q x → r x) :
+  TypicalForall p q → TypicalForall p r := by
+  rw [TypicalForall.iff_forall, TypicalForall.iff_forall]
+  apply forall_imp
+  intro x h2 h3
+  exact 
+
+
+/-- C39 c
+-/
+
+theorem Iff.cond_cong_texists {p q r: α → Prop} (h : ∀ x, p x → (q x ↔ r x)) :
+  TypicalExists p q ↔ TypicalExists p r :=
+  Iff.intro
+    (TypicalExists.cond_imp (λ x h2 ↦ (h x h2).mp)) 
+    (TypicalExists.cond_imp (λ x h2 ↦ (h x h2).mpr))
+
+/-- C39 d
+-/
+
+theorem Iff.cond_cong_tforall {p q r: α → Prop} (h : ∀ x, p x → (q x ↔ r x)) :
+  TypicalForall p q ↔ TypicalForall p r :=
+  Iff.intro
+    (TypicalForall.cond_imp (λ x h2 ↦ (h x h2).mp)) 
+    (TypicalForall.cond_imp (λ x h2 ↦ (h x h2).mpr))
+
+/-- C40 a
+-/
+theorem TypicalForall.and_comm {p q r: α → Prop} :
+  TypicalForall p (λ x ↦ q x ∧ r x) ↔ (TypicalForall p q ∧ TypicalForall p r) := by
+  rw [TypicalForall.iff_forall, TypicalForall.iff_forall, TypicalForall.iff_forall]
+  conv =>
+    lhs
+    intro x
+    rw [imp_and_iff_and_iff]
+  rw [forall_and_comm]
+  exact Iff.refl _
+
+/-- C40 b
+-/
+theorem TypicalExists.or_comm {p q r: α → Prop} :
+  TypicalExists p (λ x ↦ q x ∨ r x) ↔ (TypicalExists p q ∨ TypicalExists p r) := by
+  unfold TypicalExists
+  conv =>
+    lhs
+    congr
+    intro x
+    simp
+    rw [And.or_distr]
+    rfl
+  rw [Exists.or_comm]
+  exact Iff.refl _
+
+/-- C41 a
+-/
+
+theorem TypicalForall.or_const {p q : α → Prop} {a : Prop}:
+  TypicalForall p (λ x ↦ a ∨ q x) ↔ a ∨ TypicalForall p q := by
+  rw [TypicalForall.iff_forall, TypicalForall.iff_forall]
+  constructor
+  · intro h
+    rcases (Classical.em a) with ⟨x⟩ | ⟨y⟩
+    · exact Or.inl x 
+    · apply Or.inr
+      intro x h2
+      rcases (h x h2) with ⟨h3⟩ | ⟨h3⟩
+      · exact absurd h3 y
+      · exact h3
+  · rintro (⟨h1⟩ | ⟨h2⟩)
+    · intros
+      exact Or.inl h1
+    · intros x h
+      exact Or.inr (h2 x h)
+
+/-- C41 b
+-/
+
+theorem TypicalExists.and_const {p q : α → Prop} {a : Prop}:
+  TypicalExists p (λ x ↦ a ∧ q x) ↔ a ∧ TypicalExists p q := by
+  rw [TypicalExists.iff_not_tforall_not, TypicalExists.iff_not_tforall_not]
+  unfold Function.comp
+  conv =>
+    lhs
+    congr
+    arg 2
+    intro x
+    rw [not_and_iff_or_not]
+    rfl
+  conv => 
+    rhs
+    congr
+    · rw [← @Iff.notnot a]
+  conv =>
+    rhs
+    rw [← not_or_iff_and_not]
+  apply Iff.cong_not
+  exact TypicalForall.or_const
+
+/-- C42 aTypicalForall.iff_forall.mpr h
+-/
+
+theorem TypicalForall.tforall_comm {p q : α → Prop} {r : α → α → Prop}:
+  TypicalForall p (λ a ↦ TypicalForall q (r a)) ↔
+    TypicalForall q (λ b ↦ TypicalForall p (λ a ↦ r a b)) := by
+  rw [TypicalForall.iff_forall, TypicalForall.iff_forall]
+  conv =>
+    congr
+    · intro x
+      rw [TypicalForall.iff_forall]
+    · intro x
+      rw [TypicalForall.iff_forall]
+  apply Iff.intro
+  · intro h1 x h2 y h4
+    exact h1 y h4 x h2
+  · intro h1 x h2 y h3
+    exact h1 y h3 x h2
+
+/-- C42 b
+-/
+
+theorem TypicalExists.texists_comm {p q : α → Prop} {r : α → α → Prop}:
+  TypicalExists p (λ a ↦ TypicalExists q (r a)) ↔
+    TypicalExists q (λ b ↦ TypicalExists p (λ a ↦ r a b)) := by
+  rw [TypicalExists, TypicalExists]
+  conv =>
+    lhs
+    congr
+    intro
+    arg 2
+    rw [TypicalExists]
+  conv =>
+    rhs
+    congr
+    intro
+    arg 2
+    rw [TypicalExists]
+  constructor
+  · rintro ⟨x, ⟨ px, ⟨ y, ⟨ qy, rxy ⟩⟩⟩⟩ 
+    constructor
+    constructor
+    exact qy
+    constructor
+    constructor
+    exact px
+    exact rxy
+  · rintro ⟨x, ⟨ qx, ⟨ y, ⟨ py, rxy ⟩⟩⟩⟩
+    constructor
+    constructor
+    exact py
+    constructor
+    constructor
+    exact qx
+    exact rxy
+
+/-- C42 c
+-/
+
+
+theorem texists_tforall_to_tforall_texists {p : α → Prop} {q : β → Prop}
+  {r : α → β → Prop}: TypicalExists p (λ x ↦ TypicalForall q (r x)) → 
+  TypicalForall q (λ y ↦ TypicalExists p (λ x ↦ r x y)) := by
+  rw [TypicalExists, TypicalForall.iff_forall]
+  rintro ⟨x, ⟨px, h ⟩⟩
+  intro y qy
+  apply TypicalExists.intro px
+  exact TypicalForall.apply h qy
+  
+
+
+
+  
+
+
+
+
+
+
+
+
