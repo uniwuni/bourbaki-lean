@@ -1,3 +1,5 @@
+import Std.Tactic.RCases
+
 /-!
 # Description of Formal Mathematics
 ## Logical Theories
@@ -216,35 +218,45 @@ section
     · exact λ p ↦ Or.elim p (Or.inl ∘ h1.mpr) Or.inr
   
 end
+
 /-- C24 a
 -/
 def Iff.notnot: ¬ ¬ a ↔ a := Iff.intro Classical.rnotnot Function.notnot
+
 /-- C24 b
 -/
-def Iff.contrapose: (a → b) ↔ (¬ b → ¬ a) := Iff.intro Function.contrapose Classical.rcontrapose 
+def Iff.contrapose: (a → b) ↔ (¬ b → ¬ a) :=
+  Iff.intro Function.contrapose Classical.rcontrapose 
+
 /-- C24 c
 -/
 def And.iff_and_self: (a ∧ a) ↔ a := by simp
+
 /-- C24 d
 -/
 example: (a ∧ b) ↔ (b ∧ a) := And.comm
+
 /-- C24 e
 -/
 def And.assoc: (a ∧ (b ∧ c)) ↔ ((a ∧ b) ∧ c) :=
   Iff.intro (λ x ↦ And.intro (And.intro x.left x.right.left) x.right.right)
             (λ x ↦ And.intro x.left.left (And.intro x.left.right x.right))
+
 /-- C24 f
 -/
 def Or.iff_not_and_not: (a ∨ b) ↔ ¬(¬a ∧ ¬ b) := Iff.intro
   (λ x y ↦ Or.elim x y.left y.right)
   (λ x ↦ Classical.rnotnot
     (λ y ↦ x (And.intro (y ∘ Or.inl) (y ∘ Or.inr))))
+
 /-- C24 g
 -/  
 def Or.iff_or_self: (a ∨ a) ↔ a := by simp
+
 /-- C24 h
 -/
 def Or.comm: (a ∨ b) ↔ (b ∨ a) := Iff.intro Or.symm Or.symm
+
 /-- C24 i
 -/
 def Or.assoc: (a ∨ (b ∨ c)) ↔ ((a ∨ b) ∨ c) := by
@@ -261,6 +273,7 @@ def Or.assoc: (a ∨ (b ∨ c)) ↔ ((a ∨ b) ∨ c) := by
                  | inl h2 => exact Or.inl h2
                  | inr h3 => exact Or.inr (Or.inl h3)
     | inr h4 => exact Or.inr (Or.inr h4)
+
 /-- C24 j
 -/
 def And.or_distr: (a ∧ (b ∨ c)) ↔ ((a ∧ b) ∨ (a ∧ c)) := by
@@ -273,6 +286,7 @@ def And.or_distr: (a ∧ (b ∨ c)) ↔ ((a ∧ b) ∨ (a ∧ c)) := by
     cases h with
     | inl h1 => exact And.intro h1.left (Or.inl h1.right)
     | inr h2 => exact And.intro h2.left (Or.inr h2.right)
+
 /-- C24 k
 -/
 def Or.and_distr: (a ∨ (b ∧ c)) ↔ ((a ∨ b) ∧ (a ∨ c)) := by
@@ -287,6 +301,7 @@ def Or.and_distr: (a ∨ (b ∧ c)) ↔ ((a ∨ b) ∧ (a ∨ c)) := by
     | inr h2 => cases h.right with
                 | inl h3 => exact inl h3
                 | inr h4 => exact inr (And.intro h2 h4)
+                
 /-- C24 l
 -/ 
 def And.iff_not_right: (a ∧ ¬ b) ↔ ¬ (a → b) := by
@@ -313,3 +328,51 @@ def iff_or_with_false (h : ¬ a): (a ∨ b) ↔ b := by
   · exact λ x ↦ Or.elim x (λ y ↦ absurd y h) id
   · exact Or.inr
 
+/-
+## Quantified Theories
+### Definition of Quantifiers
+-/
+
+@[inherit_doc] notation:30 "τ" p:40 => Classical.epsilon p
+
+/-- CF11 a
+-/
+
+def Exists.iff_true_epsilon [Nonempty α] {p : α → Prop}:
+  (∃ x, p x) ↔ p (τ p) := by
+  apply Iff.intro
+  · intro h
+    exact Classical.epsilon_spec h
+  · intro h
+    exact Exists.intro _ h
+
+/-- CF11 b
+-/
+def forall_iff_not_exists_not {p : α → Prop} : (∀ x, p x) ↔ ¬ ∃ x, ¬ (p x) := by
+  apply Iff.intro
+  · intro h h2
+    rcases h2 with ⟨x, h3⟩
+    exact h3 (h x)
+  · intro h x
+    apply Classical.rnotnot
+    intro h2
+    exact absurd (Exists.intro x h2) h
+
+/-- C26
+-/
+
+def forall_iff_false_epsilon [Nonempty α] {p : α → Prop}:
+  (∀ x, p x) ↔ p (τ (Not ∘ p)) := by
+  rw [forall_iff_not_exists_not, Exists.iff_true_epsilon, Iff.notnot]
+  unfold Function.comp
+  exact Iff.refl _
+  
+/- C27: metatheorem that cannot be meaningfully translated
+-/
+
+/-- C28 
+-/     
+
+def not_forall_iff_exists_not {p : α → Prop} : ¬(∀ x, p x) ↔ ∃ x, ¬ (p x) := by
+  rw [forall_iff_not_exists_not, Iff.notnot]
+  exact Iff.refl _
