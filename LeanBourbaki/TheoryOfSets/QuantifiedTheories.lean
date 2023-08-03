@@ -454,7 +454,6 @@ theorem TypicalExists.texists_comm {p q : α → Prop} {r : α → α → Prop}:
 /-- C42 c
 -/
 
-
 theorem texists_tforall_to_tforall_texists {p : α → Prop} {q : β → Prop}
   {r : α → β → Prop}: TypicalExists p (λ x ↦ TypicalForall q (r x)) → 
   TypicalForall q (λ y ↦ TypicalExists p (λ x ↦ r x y)) := by

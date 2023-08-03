@@ -379,5 +379,3 @@ theorem imp_and_iff_and_iff {p q r : Prop}:
     exact And.intro (And.left ∘ x) (And.right ∘ x)
   · intro x y
     exact And.intro (x.left y) (x.right y)
-
-theorem 
