@@ -462,12 +462,32 @@ theorem texists_tforall_to_tforall_texists {p : α → Prop} {q : β → Prop}
   intro y qy
   apply TypicalExists.intro px
   exact TypicalForall.apply h qy
-  
 
+/- ## Exercises Chapter 1 
+   ### § 4
+-/
 
+/-- 1
+-/
 
-  
+@[simp] theorem Iff.forall_imp_const {p : α → Prop} {a : Prop}: 
+  (∀x, a → p x) ↔ (a → ∀ x, p x) := by 
+  constructor
+  · exact λ h ha x ↦ h x ha
+  · exact λ h ha x ↦ h x ha
 
+/-- 2
+-/
+theorem Exists.imp_const {p : α → Prop} {a : Prop}
+  (h : ∀ x, p x → a) : (∃ x, p x) → a := by
+  rintro ⟨x,hx⟩
+  exact h x hx
+
+/-- 3 a
+-/
+
+theorem forall_forall_apply {p : α → α → Prop} :
+ (∀ x, ∀ y, p x y) → ∀ x, p x x := λ h x ↦ h x x
 
 /-- 3 b
 -/
