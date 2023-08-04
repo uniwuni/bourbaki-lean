@@ -469,6 +469,33 @@ theorem texists_tforall_to_tforall_texists {p : α → Prop} {q : β → Prop}
   
 
 
+/-- 3 b
+-/
+theorem Exists.exists_apply {p : α → α → Prop} 
+  (h : ∃ x, p x x) : ∃ x, ∃ y, p x y := 
+    let ⟨x, hx⟩ := h
+    ⟨ x, ⟨x, hx ⟩  ⟩
+
+/-- 4 a
+-/
+theorem forall_or_imp_forall_or_exists {p q : α → Prop} 
+  (h : ∀ x, p x ∨ q x) : ((∀ x, p x) ∨ (∃ x, q x)) := by
+  apply (Classical.em (∃ x, q x)).elim
+  · exact Or.inr
+  · intro nq
+    apply Or.inl
+    intro x
+    apply (h x).elim id
+    intro qx
+    have eq : ∃ x, q x := ⟨x, qx⟩
+    exact absurd eq nq
+
+/-- 4 b
+-/
+theorem exists_and_forall_imp_exists_and_exists {p q : α → Prop} 
+  (h1 : ∃ x, p x) (h2 : ∀ x, q x) : ∃ x, p x ∧ q x := by
+  rcases h1 with ⟨x, px⟩
+  exact ⟨x, ⟨px, h2 x⟩⟩ 
 
 
 

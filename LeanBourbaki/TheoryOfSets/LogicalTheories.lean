@@ -228,7 +228,7 @@ end
 
 /-- C24 a
 -/
-theorem Iff.notnot: (¬ (¬ a)) ↔ a := Iff.intro Classical.rnotnot Function.notnot
+@[simp] theorem Iff.notnot: (¬ (¬ a)) ↔ a := Iff.intro Classical.rnotnot Function.notnot
 
 /-- C24 a' for bound variables -/
 theorem Iff.notnot_pred {p : α → Prop}: (λ x ↦ ¬ ¬ (p x)) = p := by
@@ -321,6 +321,12 @@ def Or.and_distr: (a ∨ (b ∧ c)) ↔ ((a ∨ b) ∧ (a ∨ c)) := by
                 | inl h3 => exact inl h3
                 | inr h4 => exact inr (And.intro h2 h4)
 
+/-- helper
+-/
+def Or.and_distl: ((a ∧ b) ∨ c) ↔ ((a ∨ c) ∧ (b ∨ c)) := by
+  rw [Or.comm, Or.and_distr, Or.comm, @Or.comm c b]
+  exact Iff.refl _
+
 /-- C24 l
 -/ 
 theorem And.iff_not_right: (a ∧ ¬ b) ↔ ¬ (a → b) := by
@@ -331,6 +337,12 @@ theorem And.iff_not_right: (a ∧ ¬ b) ↔ ¬ (a → b) := by
 -/
 theorem Or.iff_not_imp: (a ∨ b) ↔ (¬ a → b) := by
   rw [Function.eq_not_or, @Iff.notnot a]
+  exact Iff.refl _
+
+/-- C24 m helper 
+-/
+theorem imp_iff_not_or: (a → b) ↔ (¬ a ∨ b) := by
+  rw [Or.iff_not_imp, Iff.notnot]
   exact Iff.refl _
 
 /-- C25 a
@@ -372,13 +384,32 @@ theorem not_or_iff_and_not_pred {p q : α → Prop}:
   funext x
   rw [← @Iff.notnot (¬ p x ∧ ¬ q x), Or.iff_not_and_not]
 
-theorem imp_and_iff_and_iff {p q r : Prop}:
+theorem imp_and_iff_and_imp {p q r : Prop}:
   (p → (q ∧ r)) ↔ ((p → q) ∧ (p → r)) := by
   constructor
   · intro x 
     exact And.intro (And.left ∘ x) (And.right ∘ x)
   · intro x y
     exact And.intro (x.left y) (x.right y)
+
+theorem imp_or_iff_or_imp {p q r : Prop}: (p → (q ∨ r)) ↔ ((p → q) ∨ (p → r)) := by
+  constructor
+  · intro x
+    apply Or.elim (Classical.em p)
+    · intro ph
+      have xh := x ph
+      apply Or.elim xh
+      · exact λ y ↦ Or.inl (Function.const _ y)
+      · exact λ y ↦ Or.inr (Function.const _ y)
+    · intro nph
+      apply Or.inl
+      exact λ x ↦ absurd x nph
+  · intro x
+    apply Or.elim x
+    · intro h
+      exact Or.inl ∘ h
+    · intro h
+      exact Or.inr ∘ h 
 
 /- ## Exercises Chapter 1 
    ### § 3
@@ -405,7 +436,7 @@ theorem Or.iff_imp_imp_self: (p ∨ q) ↔ ((p → q) → q) := by
     · exact Or.inl
     · intro np
       exact Or.inr (h (λ x ↦ absurd x np))
-      
+
 /-- 1 e
 -/
 theorem Iff.iff_both_or_neither: (p ↔ q) ↔ ((p ∧ q) ∨ (¬p ∧ ¬ q)) := by
@@ -427,3 +458,122 @@ theorem Iff.iff_both_or_neither: (p ↔ q) ↔ ((p ∧ q) ∨ (¬p ∧ ¬ q)) :=
       apply Iff.cong_not
       apply Iff.intro
             (Function.const _ b.right) (Function.const _ b.left)
+
+
+theorem Iff.true_and_selfl (h : p) : (p ∧ q) ↔ q := by
+  constructor
+  · exact And.right
+  · exact And.intro h
+
+theorem Iff.true_and_selfr (h : q) : (p ∧ q) ↔ p := by
+  constructor
+  · exact And.left
+  · exact λ h2 ↦ And.intro h2 h
+
+/-- 1 f
+-/
+theorem Iff.iff_not_iff_not: (p ↔ q) ↔ ¬ ((¬ p) ↔ q) := by
+  rw [@Iff.iff_both_or_neither p q, @Iff.iff_both_or_neither (¬ p) q]
+  rw [not_or_iff_and_not, not_and_iff_or_not, not_and_iff_or_not]
+  rw [Iff.notnot, Iff.notnot, Or.and_distr, Or.and_distl, Or.and_distl]
+  rw [Iff.true_and_selfl (Classical.em p), Iff.true_and_selfr (Classical.em q)]
+  rw [And.comm, @Or.comm q (¬ p)]
+  exact Iff.refl _
+
+/-- 1 g
+-/
+theorem Iff.imp_or_not_and_imp: (p → (q ∨ ¬ r)) ↔ ((r ∧ p) → q) := by
+  rw [imp_or_iff_or_imp]
+  constructor
+  · intro h
+    apply Or.elim h
+    · intro f
+      exact f ∘ And.right 
+    · intro f h2
+      exact absurd h2.left (f h2.right)
+  · intro h
+    rw [← imp_or_iff_or_imp]
+    intro hp
+    apply Or.elim (Classical.em r)
+    · intro hr
+      exact Or.inl (h (And.intro hr hp))
+    · exact Or.inr
+/-- 1 h
+-/
+theorem imp_or_iff_or {p q r : Prop}: (p → (q ∨ r)) ↔ (q ∨ (p → r)) := by
+  rw [imp_or_iff_or_imp]
+  constructor
+  · intro x
+    apply Or.elim x
+    · intro f
+      rw [Or.iff_not_imp]
+      exact λ hnq hp ↦ absurd (f hp) hnq
+    · exact Or.inr
+  · intro x
+    apply Or.elim x
+    · intro f
+      exact Or.inl (Function.const _ f)
+    · exact Or.inr
+
+/-- 1 i
+-/
+
+theorem And.cond_intro {p q r : Prop}: (p → q) → (p → r) → p → (q ∧ r ) := 
+  λ pq pr p ↦ And.intro (pq p) (pr p)
+
+/-- 1 j
+-/
+example: (p → r) → (q → r) → (p ∨ q) → r := λ pr qr h ↦ h.elim pr qr 
+
+/-- 1 k
+-/
+
+theorem And.map_left : (p → q) → p ∧ r → q ∧ r := by
+  rintro f ⟨h1, h2⟩
+  exact And.intro (f h1) h2
+
+/-- helper
+-/
+
+theorem And.map_right : (p → q) → r ∧ p → r ∧ q := by
+  rintro f ⟨h1, h2⟩
+  exact And.intro h1 (f h2)
+
+/-- 1 l
+-/
+def Or.map_left (p : a → b) (q : a ∨ c) : b ∨ c := Or.symm (Or.map_right p (Or.symm q))
+
+/-- 2
+-/
+
+def not_iff_not_self (h : a ↔ ¬ a) : ¬ a := 
+ λ h2 ↦ absurd h2 (h.mp h2)
+
+/- 3a: takes recursion machinery not yet viable
+   3b: takes recursion machinery not yet viable
+-/
+
+@[simp] def nand p q := (¬ p) ∨ (¬ q)
+
+namespace nand
+  /-- 4 a
+  -/
+  def not_def: ¬ a ↔ nand a a := Iff.symm Or.iff_or_self
+  @[simp] def not_def' : nand a a ↔ ¬ a := Iff.symm not_def
+  /-- 4 b
+  -/
+  def or_def: (a ∨ b) ↔ nand (nand a a) (nand b b) := by
+    simp
+  /-- 4 c
+  -/
+  def and_def : (a ∧ b) ↔ nand (nand a b) (nand a b) := by
+    simp[And.iff_not_or_not]
+  /-- 4 d
+  -/
+  def imp_def : (a → b) ↔ nand a (nand b b) := by
+    simp[imp_iff_not_or]
+  
+end nand
+
+/- 5: meta theorem that cannot be properly stated 
+-/
