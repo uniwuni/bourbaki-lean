@@ -186,6 +186,8 @@ example (h : a ↔ b) : b ↔ a := Iff.symm h
 -/
 example (h1 : a ↔ b) (h2 : b ↔ c) : a ↔ c := Iff.trans h1 h2
 
+@[simp] def Or.comm: (a ∨ b) ↔ (b ∨ a) := Iff.intro Or.symm Or.symm
+
 section
 
   variable (h1 : a ↔ b) 
@@ -217,13 +219,26 @@ section
     · exact λ x ↦ And.intro (h1.mp x.left) x.right
     · exact λ x ↦ And.intro (h1.mpr x.left) x.right
 
+  /-- C23 d helper
+  -/
+  def Iff.cong_andr: (c ∧ a) ↔ (c ∧ b) := by
+    rw [@And.comm c a, @And.comm c b]
+    exact Iff.cong_andl h1
+
+
   /-- C23 e
   -/
   def Iff.cong_orl: (a ∨ c) ↔ (b ∨ c) := by
     apply Iff.intro
     · exact λ p ↦ Or.elim p (Or.inl ∘ h1.mp) Or.inr
     · exact λ p ↦ Or.elim p (Or.inl ∘ h1.mpr) Or.inr
-  
+
+  /-- C23 e helper
+  -/
+  def Iff.cong_orr: (c ∨ a) ↔ (c ∨ b) := by
+    rw [@Or.comm c a, @Or.comm c b]
+    exact Iff.cong_orl h1
+
 end
 
 /-- C24 a
@@ -270,15 +285,15 @@ def Or.iff_not_and_not: (a ∨ b) ↔ ¬(¬a ∧ ¬ b) := Iff.intro
 
 /-- C24 g
 -/  
-def Or.iff_or_self: (a ∨ a) ↔ a := by simp
+@[simp] def Or.iff_or_self: (a ∨ a) ↔ a := by simp
 
 /-- C24 h
 -/
-def Or.comm: (a ∨ b) ↔ (b ∨ a) := Iff.intro Or.symm Or.symm
+example: (a ∨ b) ↔ (b ∨ a) := Iff.intro Or.symm Or.symm
 
 /-- C24 i
 -/
-def Or.assoc: (a ∨ (b ∨ c)) ↔ ((a ∨ b) ∨ c) := by
+@[simp] def Or.assoc: (a ∨ (b ∨ c)) ↔ ((a ∨ b) ∨ c) := by
   apply Iff.intro
   · intro h 
     cases h with
@@ -295,7 +310,7 @@ def Or.assoc: (a ∨ (b ∨ c)) ↔ ((a ∨ b) ∨ c) := by
 
 /-- C24 j
 -/
-def And.or_distr: (a ∧ (b ∨ c)) ↔ ((a ∧ b) ∨ (a ∧ c)) := by
+@[simp] def And.or_distr: (a ∧ (b ∨ c)) ↔ ((a ∧ b) ∨ (a ∧ c)) := by
   apply Iff.intro
   · intro h
     cases h.right with
@@ -308,7 +323,7 @@ def And.or_distr: (a ∧ (b ∨ c)) ↔ ((a ∧ b) ∨ (a ∧ c)) := by
 
 /-- C24 k
 -/
-def Or.and_distr: (a ∨ (b ∧ c)) ↔ ((a ∨ b) ∧ (a ∨ c)) := by
+@[simp] def Or.and_distr: (a ∨ (b ∧ c)) ↔ ((a ∨ b) ∧ (a ∨ c)) := by
   apply Iff.intro
   · intro h
     cases h with
@@ -323,10 +338,14 @@ def Or.and_distr: (a ∨ (b ∧ c)) ↔ ((a ∨ b) ∧ (a ∨ c)) := by
 
 /-- helper
 -/
-def Or.and_distl: ((a ∧ b) ∨ c) ↔ ((a ∨ c) ∧ (b ∨ c)) := by
+@[simp] def Or.and_distl: ((a ∧ b) ∨ c) ↔ ((a ∨ c) ∧ (b ∨ c)) := by
   rw [Or.comm, Or.and_distr, Or.comm, @Or.comm c b]
   exact Iff.refl _
 
+def And.or_distl: ((a ∨ b) ∧ c) ↔ ((a ∧ c) ∨ (b ∧ c)) := by
+  rw [And.comm, And.or_distr, And.comm, @And.comm c b]
+  exact Iff.refl _
+  
 /-- C24 l
 -/ 
 theorem And.iff_not_right: (a ∧ ¬ b) ↔ ¬ (a → b) := by
@@ -580,8 +599,20 @@ end nand
 
 /- Simp lemmas
 -/
-set_option tactic.simp.trace true
+
 @[simp] theorem imp_self_true: (p → p) ↔ True := by 
   constructor
   · simp
   · exact Function.const _ id 
+
+
+def Iff.cong_andr_cond (h : c → (a ↔ b)): (c ∧ a) ↔ (c ∧ b) := by
+    constructor
+    · rintro ⟨hc, ha⟩
+      exact And.intro hc ((h hc).mp ha)
+    · rintro ⟨hc, hb⟩
+      exact And.intro hc ((h hc).mpr hb)
+    
+def Iff.cong_andl_cond (h : c → (a ↔ b)): (a ∧ c) ↔ (b ∧ c) := by
+    have h2 := Iff.cong_andr_cond h
+    simp [And.comm, h2]

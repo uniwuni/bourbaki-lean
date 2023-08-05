@@ -1,7 +1,7 @@
 import LeanBourbaki.TheoryOfSets.LogicalTheories
 import Std.Tactic.Simpa
 import Std.Tactic.SimpTrace
-/-
+/-#
 ## Quantified Theories
 ### Definition of Quantifiers
 -/
@@ -134,8 +134,9 @@ def Iff.cong_exists {p q : α → Prop} (h : ∀ x, p x ↔ q x) :
 /-- C32 b
 -/
 
-@[simp] def Exists.or_comm {p q : α → Prop} : (∃ x, p x ∨ q x) ↔
-  ((∃ x, p x) ∨ (∃ x, q x)) := by
+@[simp] def Exists.or_comm {p q : α → Prop} : 
+  ((∃ x, p x) ∨ (∃ x, q x)) ↔ (∃ x, p x ∨ q x):= by
+  apply Iff.symm
   rw [Exists.iff_not_forall_not,
       Exists.iff_not_forall_not,
       Exists.iff_not_forall_not] at *
@@ -559,7 +560,7 @@ theorem TypicalExists.imp_iff_exists {p q : α → Prop} (h : ∀ x, q x → p x
   intro x
   constructor
   · simpa using h x
-    
+  · exact And.right  
 /-- 7 b
 -/
 theorem TypicalForall.imp_not_iff_forall {p q : α → Prop}
