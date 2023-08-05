@@ -384,7 +384,7 @@ theorem not_or_iff_and_not_pred {p q : α → Prop}:
   funext x
   rw [← @Iff.notnot (¬ p x ∧ ¬ q x), Or.iff_not_and_not]
 
-theorem imp_and_iff_and_imp {p q r : Prop}:
+@[simp] theorem imp_and_iff_and_imp {p q r : Prop}:
   (p → (q ∧ r)) ↔ ((p → q) ∧ (p → r)) := by
   constructor
   · intro x 
@@ -392,7 +392,7 @@ theorem imp_and_iff_and_imp {p q r : Prop}:
   · intro x y
     exact And.intro (x.left y) (x.right y)
 
-theorem imp_or_iff_or_imp {p q r : Prop}: (p → (q ∨ r)) ↔ ((p → q) ∨ (p → r)) := by
+@[simp] theorem imp_or_iff_or_imp {p q r : Prop}: (p → (q ∨ r)) ↔ ((p → q) ∨ (p → r)) := by
   constructor
   · intro x
     apply Or.elim (Classical.em p)
@@ -577,3 +577,11 @@ end nand
 
 /- 5: meta theorem that cannot be properly stated 
 -/
+
+/- Simp lemmas
+-/
+set_option tactic.simp.trace true
+@[simp] theorem imp_self_true: (p → p) ↔ True := by 
+  constructor
+  · simp
+  · exact Function.const _ id 

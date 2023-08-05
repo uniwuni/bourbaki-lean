@@ -1,5 +1,6 @@
 import LeanBourbaki.TheoryOfSets.LogicalTheories
-
+import Std.Tactic.Simpa
+import Std.Tactic.SimpTrace
 /-
 ## Quantified Theories
 ### Definition of Quantifiers
@@ -93,13 +94,13 @@ def apply_forall {p : α → Prop} : (∀ y, p y) → p x := by
 /-- C31 a
 -/
 
-@[simp] def forall_imp {p q : α → Prop} (h : ∀ x, p x → q x) :
+def forall_imp {p q : α → Prop} (h : ∀ x, p x → q x) :
   (∀ x, p x) → (∀ x, q x) := λ h2 x ↦ h x (h2 x) 
 
 /-- C31 b
 -/
 
-@[simp] def Exists.imp {p q : α → Prop} (h : ∀ x, p x → q x) :
+def Exists.imp {p q : α → Prop} (h : ∀ x, p x → q x) :
   (∃ x, p x) → (∃ x, q x) := by
   rw [Exists.iff_not_forall_not, Exists.iff_not_forall_not, ← Iff.contrapose]
   have h2 : ∀ x, (λ x ↦ (p x → q x)) x := h
@@ -109,14 +110,14 @@ def apply_forall {p : α → Prop} : (∀ y, p y) → p x := by
 /-- C31 c
 -/
 
-@[simp] def Iff.cong_forall {p q : α → Prop} (h : ∀ x, p x ↔ q x) :
+def Iff.cong_forall {p q : α → Prop} (h : ∀ x, p x ↔ q x) :
   (∀ x, p x) ↔ (∀ x, q x) :=
   Iff.intro (forall_imp (λ x ↦ (h x).mp)) (forall_imp (λ x ↦ (h x).mpr))
 
 /-- C31 d
 -/
 
-@[simp] def Iff.cong_exists {p q : α → Prop} (h : ∀ x, p x ↔ q x) :
+def Iff.cong_exists {p q : α → Prop} (h : ∀ x, p x ↔ q x) :
   (∃ x, p x) ↔ (∃ x, q x) :=
   Iff.intro (Exists.imp (λ x ↦ (h x).mp)) (Exists.imp (λ x ↦ (h x).mpr))
 
@@ -211,7 +212,7 @@ def exists_forall_to_forall_exists {p : α → β → Prop} :
 
 /-- CF12 a
 -/
-def TypicalExists (p q : α → Prop) := ∃ x, p x ∧ q x 
+@[simp] def TypicalExists (p q : α → Prop) := ∃ x, p x ∧ q x 
 
 /-- CF12 b
 -/
@@ -219,7 +220,7 @@ def TypicalForall (p q : α → Prop) := ¬ (TypicalExists p (Not ∘ q))
 
 /-- C35
 -/
-theorem TypicalForall.iff_forall {p q : α → Prop} :
+@[simp] theorem TypicalForall.iff_forall {p q : α → Prop} :
   TypicalForall p q ↔ ∀ x, p x → q x := by
     unfold TypicalForall TypicalExists
     conv =>
@@ -331,7 +332,7 @@ theorem TypicalForall.and_comm {p q r: α → Prop} :
   conv =>
     lhs
     intro x
-    rw [imp_and_iff_and_iff]
+    rw [imp_and_iff_and_imp]
   rw [forall_and_comm]
   exact Iff.refl _
 
@@ -517,8 +518,81 @@ theorem exists_and_forall_imp_exists_and_exists {p q : α → Prop}
   rcases h1 with ⟨x, px⟩
   exact ⟨x, ⟨px, h2 x⟩⟩ 
 
+/-- 5
+-/
+theorem forall_and_pred [Nonempty α] [Nonempty β]
+  {p : α → Prop} {q : β → Prop} : 
+  (∀x, ∀y, p x ∧ q y) ↔ ((∀ x, p x) ∧ (∀ y, q y)) := by
+  constructor
+  · intro f
+    constructor
+    · intro x 
+      exact (f x Classical.ofNonempty).left
+    · intro x
+      exact (f Classical.ofNonempty x).right
+  · intro f x y
+    exact ⟨f.left x, f.right y⟩
 
 
+/-- 6 a
+-/
+
+theorem TypicalExists.exists {p q: α → Prop}
+  (h : TypicalExists p q) : ∃ x, q x := Exists.imp (λ _ ↦ And.right) h
+
+/-- 6 b
+-/
+
+theorem TypicalForall.fromForall {p q : α → Prop} (h : ∀ x, q x):
+  TypicalForall p q := by
+  rw [TypicalForall.iff_forall]
+  intros
+  apply h
 
 
+/-- 7 a
+-/
+theorem TypicalExists.imp_iff_exists {p q : α → Prop} (h : ∀ x, q x → p x):
+ (∃ x, q x) ↔ (TypicalExists p q) := by
+  unfold TypicalExists
+  apply Iff.cong_exists
+  intro x
+  constructor
+  · simpa using h x
+    
+/-- 7 b
+-/
+theorem TypicalForall.imp_not_iff_forall {p q : α → Prop}
+  (h : ∀ x, ¬ q x → p x): (∀ x, q x) ↔ (TypicalForall p q) := by
+  simp only [iff_forall]
+  apply Iff.cong_forall
+  intro x 
+  constructor
+  · exact Function.const _
+  · intro f
+    have f2 := Function.contrapose f
+    apply Classical.rnotnot
+    intro nq
+    exact absurd (h x nq) (f2 nq)
 
+/-- 7 c
+-/
+theorem TypicalExists.true_imp_iff_exists (h : ∀ x, p x):
+ (∃ x, q x) ↔ (TypicalExists p q) :=
+   TypicalExists.imp_iff_exists (λ x _ ↦ h x)
+  
+/-- 7 d
+-/
+theorem TypicalForall.true_imp_iff_exists (h : ∀ x, p x):
+ (∀ x, q x) ↔ (TypicalForall p q) :=
+   TypicalForall.imp_not_iff_forall (λ x _ ↦ h x)
+
+/-- 8
+-/
+example {p q : α → Prop} (h : p x) : q x → TypicalExists p q
+  := TypicalExists.intro h
+
+/-- 9
+-/
+example {p q : α → Prop} (h : p x) : TypicalForall p q → q x
+  := λ a ↦ TypicalForall.apply a h
