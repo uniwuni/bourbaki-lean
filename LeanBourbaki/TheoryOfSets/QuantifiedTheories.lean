@@ -124,7 +124,7 @@ def Iff.cong_exists {p q : α → Prop} (h : ∀ x, p x ↔ q x) :
 /-- C32 a
 -/
 
-@[simp] def forall_and_comm {p q : α → Prop} : (∀ x, p x ∧ q x) ↔
+def forall_and_comm {p q : α → Prop} : (∀ x, p x ∧ q x) ↔
   ((∀ x, p x) ∧ (∀ x, q x)) := by
   apply Iff.intro
   · exact (λ h ↦ And.intro (λ x ↦ (h x).left) (λ x ↦ (h x).right))
@@ -134,7 +134,7 @@ def Iff.cong_exists {p q : α → Prop} (h : ∀ x, p x ↔ q x) :
 /-- C32 b
 -/
 
-@[simp] def Exists.or_comm {p q : α → Prop} : 
+def Exists.or_comm {p q : α → Prop} : 
   ((∃ x, p x) ∨ (∃ x, q x)) ↔ (∃ x, p x ∨ q x):= by
   apply Iff.symm
   rw [Exists.iff_not_forall_not,
@@ -597,3 +597,9 @@ example {p q : α → Prop} (h : p x) : q x → TypicalExists p q
 -/
 example {p q : α → Prop} (h : p x) : TypicalForall p q → q x
   := λ a ↦ TypicalForall.apply a h
+
+theorem forall_iff_cancelr {p q r : α → Prop}
+  (h1 : ∀x, p x ↔ r x) (h2 : ∀x, q x ↔ r x) (x : α) : p x ↔ q x := by
+  specialize h1 x
+  specialize h2 x
+  simp[*]

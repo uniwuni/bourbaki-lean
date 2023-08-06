@@ -1,3 +1,4 @@
 import LeanBourbaki.TheoryOfSets.LogicalTheories
 import LeanBourbaki.TheoryOfSets.QuantifiedTheories
 import LeanBourbaki.TheoryOfSets.EqualitarianTheories
+import LeanBourbaki.TheoryOfSets.CollectivizingRelations

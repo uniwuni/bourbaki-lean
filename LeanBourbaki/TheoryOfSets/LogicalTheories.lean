@@ -310,7 +310,7 @@ example: (a ∨ b) ↔ (b ∨ a) := Iff.intro Or.symm Or.symm
 
 /-- C24 j
 -/
-@[simp] def And.or_distr: (a ∧ (b ∨ c)) ↔ ((a ∧ b) ∨ (a ∧ c)) := by
+def And.or_distr: (a ∧ (b ∨ c)) ↔ ((a ∧ b) ∨ (a ∧ c)) := by
   apply Iff.intro
   · intro h
     cases h.right with
@@ -323,7 +323,7 @@ example: (a ∨ b) ↔ (b ∨ a) := Iff.intro Or.symm Or.symm
 
 /-- C24 k
 -/
-@[simp] def Or.and_distr: (a ∨ (b ∧ c)) ↔ ((a ∨ b) ∧ (a ∨ c)) := by
+def Or.and_distr: (a ∨ (b ∧ c)) ↔ ((a ∨ b) ∧ (a ∨ c)) := by
   apply Iff.intro
   · intro h
     cases h with
@@ -338,14 +338,14 @@ example: (a ∨ b) ↔ (b ∨ a) := Iff.intro Or.symm Or.symm
 
 /-- helper
 -/
-@[simp] def Or.and_distl: ((a ∧ b) ∨ c) ↔ ((a ∨ c) ∧ (b ∨ c)) := by
+def Or.and_distl: ((a ∧ b) ∨ c) ↔ ((a ∨ c) ∧ (b ∨ c)) := by
   rw [Or.comm, Or.and_distr, Or.comm, @Or.comm c b]
   exact Iff.refl _
 
 def And.or_distl: ((a ∨ b) ∧ c) ↔ ((a ∧ c) ∨ (b ∧ c)) := by
   rw [And.comm, And.or_distr, And.comm, @And.comm c b]
   exact Iff.refl _
-  
+
 /-- C24 l
 -/ 
 theorem And.iff_not_right: (a ∧ ¬ b) ↔ ¬ (a → b) := by
@@ -370,6 +370,20 @@ def iff_and_with_true (h : a): (a ∧ b) ↔ b := by
   apply Iff.intro
   · exact And.right 
   · exact And.intro h
+
+@[simp] def iff_and_with_true_iff: ((a ∧ b) ↔ b) ↔ (b → a) := by
+  constructor
+  · intro h x
+    rw [← @Iff.notnot a]
+    intro h2
+    rw [← h] at x
+    exact absurd x.left h2
+  · intro h
+    constructor
+    · exact And.right
+    · intro h2
+      exact And.intro (h h2) h2
+
 
 /-- C25 b
 -/
@@ -616,3 +630,28 @@ def Iff.cong_andr_cond (h : c → (a ↔ b)): (c ∧ a) ↔ (c ∧ b) := by
 def Iff.cong_andl_cond (h : c → (a ↔ b)): (a ∧ c) ↔ (b ∧ c) := by
     have h2 := Iff.cong_andr_cond h
     simp [And.comm, h2]
+
+@[simp] def Or.imp_iff_and_imp: ((a ∨ b) → c) ↔ ((a → c) ∧ (b → c)) := by
+  constructor
+  · intro h
+    constructor
+    · exact h ∘ Or.inl 
+    · exact h ∘ Or.inr
+  · exact λ a c ↦ Or.elim c a.left a.right
+
+@[simp] theorem and_neg_or_iff_and: (a ∧ (¬a ∨ b)) ↔ a ∧ b := by
+  constructor
+  · rintro ⟨x,y⟩
+    rcases y
+    · apply absurd x ‹¬ a›
+    · apply And.intro x ‹b›
+  · rintro ⟨x,y⟩
+    exact And.intro x (Or.inr y)
+
+@[simp] theorem not_and_not_self: (¬(a ∧ ¬ a)) = True := by
+  apply propext
+  simp only [iff_true]
+  intro h
+  exact absurd h.left h.right
+
+
