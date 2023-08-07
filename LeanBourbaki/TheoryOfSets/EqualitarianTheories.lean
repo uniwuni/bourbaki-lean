@@ -309,6 +309,16 @@ theorem iff_to_eq_epsilon_to_eq_all [Nonempty α] {x y : α}
   · intro px
     exists x
 
+@[simp] theorem Exists.and_eq_iff_selflr {p : α → Prop} {x : α}
+  : (∃ y, y = x ∧ p y) ↔ p x := by
+  constructor
+  · rintro ⟨y, ⟨yx, py⟩⟩
+    rw[← yx]
+    exact py
+  · intro px
+    exists x
+
+
 @[simp] theorem Iff.forall_eq_holds {r : α → Prop} :
   (∀ (z : α), (x = z → r z)) ↔ r x := by
   constructor

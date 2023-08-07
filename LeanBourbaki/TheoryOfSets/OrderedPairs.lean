@@ -1,5 +1,9 @@
 import LeanBourbaki.TheoryOfSets.CollectivizingRelations
-
+/-#
+# Theory of Sets
+## Ordered Pairs
+### The Axiom of the Ordered Pair
+-/
 section WeakSetModel
 variable {o : Type u}
 variable [WeakSetModel o]
@@ -305,14 +309,24 @@ theorem uncurry_proposition.iff_uncurry_proposition_pair {r : o → o → Prop} 
     right
     rw[← Subtype.eq_iff_val_eq]
     
+@[simp] theorem OrderedPair.eq_iff {z1 z2 : OrderedPair (o := o)}: z1 = z2 ↔ ((z1.fst = z2.fst) ∧(z1.snd = z2.snd)) := by
+  constructor
+  · intro h
+    simp[h]
+  · rintro ⟨h1,h2⟩
+    rw[← OrderedPair.exists_eq_iff_fst] at h1
+    rcases h1 with ⟨y, prf⟩ 
+    rw[prf]
+    simp only [prf, OrderedPair.snd_eq, Eq.symm_iff] at h2 
+    rw[← OrderedPair.exists_eq_iff_snd] at h2
+    rcases h2 with ⟨x,prf2⟩
+    simp[prf2]
+       
+
+
 @[simp] theorem OrderedPair.delta {z : OrderedPair}: ((z.fst, z.snd) : OrderedPair (o := o))
-     = z := by
-  rcases z with ⟨z,⟨x,y,p⟩⟩
-  unfold ordered_pair_uncurry_type ordered_pair_uncurry OrderedPair.mk
-  rw[← Subtype.eq_iff_val_eq]
-  dsimp
-  simp[p]
-  unfold OrderedPair.mk
+     = z := by simp[OrderedPair.eq_iff]
+
 
   -- [p, Eq.symm_iff] at *
 
@@ -327,7 +341,33 @@ theorem uncurry_proposition.iff_uncurry_proposition_pair {r : o → o → Prop} 
   · intro a
     exists z.fst
     exists z.snd
-    simp
+    simpa
+
+@[simp] theorem uncurry_proposition_pair.pair {r : o → o → Prop} {x y : o} :
+  uncurry_proposition_pair r (x,y) ↔ r x y := by
+  unfold uncurry_proposition_pair
+  constructor
+  · rintro ⟨x1, y1, ⟨a,b⟩⟩
+    simp only [OrderedPair.eq_iff, OrderedPair.fst_eq, OrderedPair.snd_eq] at a 
+    simp[a.left, a.right, b]
+  · rintro rxy
+    exists x
+    exists y
+
+@[simp] theorem uncurry_proposition_pair.pair_exists {r : o → o → Prop} {x y : o} :
+  (∃ z : OrderedPair, z = (x,y) ∧ uncurry_proposition_pair r z) ↔ r x y := by
+  constructor
+  · rintro ⟨ z, ⟨eq, rp⟩⟩
+    rw [eq] at rp
+    simp only [iff_proj, OrderedPair.fst_eq, OrderedPair.snd_eq] at rp 
+    exact rp
+  · intro rxy
+    exists (x,y)
+    apply And.intro rfl
+    simp [rxy]
+
+
+
 
 
 end WeakSetModel
