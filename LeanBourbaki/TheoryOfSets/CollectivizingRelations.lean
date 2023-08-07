@@ -20,10 +20,10 @@ class WeakSetModel (o : Type u) extends Membership o o where
   powerset_exists: ∀ X : o, ∃ Y : o, ∀ z : o, z ∈ Y ↔ (∀ w, w ∈ z → w ∈ X)
 
 
-namespace WeakSetModel
+section WeakSetModel
 variable {o : Type u}
 variable [WeakSetModel o]
-instance nonempty_model: Nonempty o := model_nonempty
+instance nonempty_model: Nonempty o := WeakSetModel.model_nonempty
 /-
 ### Inclusion
 -/
@@ -66,7 +66,7 @@ theorem Subset.from {x y : o} (h : ∀ z, z ∈ x → z ∈ y) : x ⊆ y := by
 -/
 
 theorem extent_subset {x y : o} (h1 : x ⊆ y) (h2 : y ⊆ x) : x = y :=
-  extent h1 h2
+  WeakSetModel.extent h1 h2
 
 @[ext]
 theorem eq_of_iff_elem {x y : o} (h1 : ∀ z, z ∈ x ↔ z ∈ y) : x = y := by
@@ -79,7 +79,7 @@ theorem eq_iff_iff {x y : o} : (x = y) ↔ (∀ w, w ∈ x ↔ w ∈ y) := by
   · intro h w
     simp[h]
   · intro h
-    apply extent
+    apply WeakSetModel.extent
     · exact λ z ↦ (h z).mp
     · exact λ z ↦ (h z).mpr
 
@@ -100,6 +100,10 @@ theorem element_single_valued {R : o → Prop}: is_single_valued_predicate
     intros y z ry rz
     rw [eq_iff_iff]
     apply forall_iff_cancelr ry rz
+
+theorem iff_elem_from_eq {x y : o} (h : x = y) (z : o) : z ∈ x ↔ z ∈ y :=
+  by rw [h]
+
 
 /-
 ### Collectivizing Relations
@@ -208,7 +212,7 @@ theorem collectivizes_iff_in_collection_iff [Nonempty o]:
 
 instance unordered_pair_collectivizes {x y : o}: is_collectivizing
   (λ z ↦ z = x ∨ z = y) where
-  prf := pair_exists x y
+  prf := WeakSetModel.pair_exists x y
 
 /-- Definition 2
 -/
@@ -257,7 +261,7 @@ theorem scheme_selection_union {r : o → o → Prop} : (∀ y, ∃ X, ∀ x, r 
     ∀ Y : o, is_collectivizing (λ x ↦ ∃ y, y ∈ Y ∧ r x y) := by
     intro h Y
     constructor
-    apply selection_union h
+    apply WeakSetModel.selection_union h
 
 /-- C51
 -/
@@ -641,7 +645,25 @@ theorem empty_set.eq_epsilon_epsilon:
     rw[← empty_set] at h4
     simp only [elem] at h4 
   · exact absurd h h3
-  
+
+noncomputable instance sets_sdiff: SDiff o where
+  sdiff := set_difference 
+
+noncomputable instance sets_emptycollection: EmptyCollection o where
+  emptyCollection := empty_set
+
+theorem singleton.inj {x y : o} (h : {x} = ({y} : o)) : x = y := by
+  rw [eq_iff_iff] at h
+  simp only [elem_iff, Eq.symm_iff] at h 
+  exact (h y).mpr rfl
+
+theorem pair_eq_singleton_iff_same {x y z : o} (h : unordered_pair x y = {z}):
+  x = y := by
+  have h2 := iff_elem_from_eq h x
+  have h3 := iff_elem_from_eq h y
+  simp only [unordered_pair.elem_iff, Eq.symm_iff, true_or, singleton.elem_iff, true_iff, Or.comm] at h2 h3 
+  rw[h2,←h3]
+
 end WeakSetModel
 /-- 6
 -/
@@ -657,6 +679,4 @@ theorem alternate_extent [Nonempty p] {r : p → p → Prop}
   intro z
   specialize xy z
   rw [xy]
-  
 
-    
