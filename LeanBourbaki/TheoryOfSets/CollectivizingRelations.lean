@@ -23,6 +23,7 @@ class WeakSetModel (o : Type u) extends Membership o o where
 section WeakSetModel
 variable {o : Type u}
 variable [WeakSetModel o]
+instance set_to_subtype: CoeSort o (Type u) := ⟨λ a ↦ Subtype (λ x:o ↦ x ∈ a)⟩
 instance nonempty_model: Nonempty o := WeakSetModel.model_nonempty
 /-
 ### Inclusion

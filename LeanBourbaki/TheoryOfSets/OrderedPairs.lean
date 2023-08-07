@@ -367,7 +367,7 @@ theorem uncurry_proposition.iff_uncurry_proposition_pair {r : o → o → Prop} 
     simp [rxy]
 
 /-
-*** Exercises
+#### Exercises
 -/
 /-- 1 a
 -/
@@ -393,6 +393,71 @@ theorem uncurry_proposition.iff_uncurry_proposition_pair {r : o → o → Prop} 
   · intro f z
     apply f
 
+/-
+### Product of Two Sets
+-/
+
+/-- Theorem 1
+-/
+theorem product_is_collectivizing (X Y : o):
+  ∃Z:o, ∀z:o, (z ∈ Z ↔ ∃ x, ∃ y, z = ((x,y) : o) ∧ x ∈ X ∧ y ∈ Y) := by
+  let a (y:o) := {((x,y) : o) || x ∈ X}
+  have h2 (y : o) : ∃ A:o, ∀ z:o, z ∈ a y → z ∈ A := by
+    exists a y
+    simp
+  have h3 := scheme_selection_union h2 Y
+  have h3 := h3.prf
+  rcases h3 with ⟨prod, prf⟩
+  exists prod
+  intro z
+  specialize prf z
+  simp[prf]
+  conv =>
+    lhs
+    congr
+    ext
+    rw[← Exists.and_const]
+  rw[Exists.exists_comm (p := λ x x_1 ↦ x ∈ Y ∧ z = ↑(x_1, x) ∧ x_1 ∈ X)]
+  apply Iff.cong_exists
+  intro x
+  apply Iff.cong_exists
+  intro y
+  simp only [And.comm, And.assoc]
+
+instance is_collectivizing.product_set (X Y : o):
+  is_collectivizing (λ z : o ↦ ∃x : OrderedPair, x.val = z ∧ x.fst ∈ X ∧ x.snd ∈ Y) := by
+  constructor
+  rcases (product_is_collectivizing X Y) with ⟨prod, prf⟩
+  exists prod
+  intro x
+  rw[prf x]
+  constructor
+  · rintro ⟨x1,x2,⟨p,x1x,x2y⟩⟩
+    exists (x1, x2)
+    simp only [Eq.symm_iff, OrderedPair.fst_eq, OrderedPair.snd_eq, and_self, and_true]
+    simp[ordered_pair_uncurry,ordered_pair_uncurry_type,OrderedPair.mk, *]
+  · rintro ⟨a, ⟨h1,h2,h3⟩⟩
+    exists a.fst
+    exists a.snd
+    rw[← h1]
+    constructor
+    · have h4 : (↑(OrderedPair.fst a, OrderedPair.snd a) : OrderedPair)
+                = (⟨(↑(OrderedPair.fst a, OrderedPair.snd a) : o), (by simp[ordered_pair_uncurry] )⟩: OrderedPair)
+              := by
+              
+              
+
+
+
+      
+
+      
+
+
+
+
+
+def product_set (X Y : o) := is_collectivizing.set
 
 
 
