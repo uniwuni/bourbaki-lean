@@ -12,7 +12,7 @@ noncomputable def ordered_pair (x y : o) := unordered_pair {x} (unordered_pair x
 noncomputable instance ordered_pair_map: Coe (o × o) o := ⟨ordered_pair_uncurry⟩
 
 
-/-- A3
+/-- A3 and Exercise 2a, 2b
 -/
 theorem ordered_pair.inj {x x' y y' : o} (h : ordered_pair x y = ordered_pair x' y'):
   x = x' ∧ y = y' := by
