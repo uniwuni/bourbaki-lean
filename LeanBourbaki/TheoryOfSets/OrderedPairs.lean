@@ -366,6 +366,32 @@ theorem uncurry_proposition.iff_uncurry_proposition_pair {r : o → o → Prop} 
     apply And.intro rfl
     simp [rxy]
 
+/-
+*** Exercises
+-/
+/-- 1 a
+-/
+@[simp] theorem OrderedPair.exists_relation_of_projection {r : o → o → Prop}:
+  (∃z:OrderedPair, r z.fst z.snd) ↔ (∃x:o,∃y:o, r x y) := by
+  constructor
+  · rintro ⟨z, rz⟩
+    exists fst z
+    exists snd z
+  · rintro ⟨x,y,rxy⟩
+    exists (x,y)
+    simp [rxy]
+
+/-- 1 b
+-/
+@[simp] theorem OrderedPair.forall_relation_of_projection {r : o → o → Prop}:
+  (∀z:OrderedPair, r z.fst z.snd) ↔ (∀x:o,∀y:o, r x y) := by
+  constructor
+  · intro f x y
+    specialize f (x,y)
+    simp only [fst_eq, snd_eq] at f 
+    exact f
+  · intro f z
+    apply f
 
 
 
