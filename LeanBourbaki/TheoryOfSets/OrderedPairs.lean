@@ -142,6 +142,9 @@ instance second_projection_is_functional (h : is_ordered_pair z): is_functional_
 
 noncomputable def is_ordered_pair.fst (z : o) : o := τ (λ x : o ↦ ∃y : o, z = (x,,y))
 noncomputable def is_ordered_pair.snd (z : o) : o := τ (λ y : o ↦ ∃x : o, z = (x,,y))
+
+notation:200 "proj₁ " arg:201 => is_ordered_pair.fst arg
+notation:200 "proj₂ " arg:201 => is_ordered_pair.snd arg
 @[simp] theorem OrderedPair.exists_eq_iff_fst {z x : o} (h : is_ordered_pair z): 
   (∃y : o, z = (x,,y)) ↔ x = is_ordered_pair.fst z := by
   unfold is_ordered_pair.fst
@@ -350,6 +353,77 @@ instance is_collectivizing.product_set (X Y : o):
     exists is_ordered_pair.snd x
     simp[*]
       
+/-- Definition 1
+-/
+noncomputable def set_product (X Y : o) := is_collectivizing.set (λ z : o ↦ is_ordered_pair z ∧ is_ordered_pair.fst z ∈ X ∧ is_ordered_pair.snd z ∈ Y) := by
 
+@[inherit_doc] infixl:70 " ×ₛ " => set_product
+
+@[simp] theorem set_product.elem {X Y z : o} : z ∈ set_product X Y ↔
+  (is_ordered_pair z ∧ is_ordered_pair.fst z ∈ X ∧ is_ordered_pair.snd z ∈ Y) := by
+  simp[set_product]
+
+@[simp] theorem set_product.ordered_pair_elem {X Y z : o} {hz: is_ordered_pair z} : z ∈ set_product X Y ↔
+  (is_ordered_pair.fst z ∈ X ∧ is_ordered_pair.snd z ∈ Y) := by
+  simp[set_product,hz]
+
+@[simp] theorem set_product.pair_elem {X Y x y : o} : (x ,, y) ∈ set_product X Y ↔ (x ∈ X ∧ y ∈ Y) := by
+  simp
+
+/-- Proposition 1
+-/
+
+@[simp] theorem set_product.subset_product_iff {X Y X' Y' : o} {x1 : o} {y1 : o} (hx : x1 ∈ X') (hy : y1 ∈ Y') :
+  (X' ×ₛ Y') ⊆ (X ×ₛ Y) ↔ X' ⊆ X ∧ Y' ⊆ Y := by
+  simp [Subset.iff]
+  constructor
+  · intro h
+    constructor
+    · intro x xin
+      specialize h (x ,, y1)
+      simp only [is_ordered_pair.ordered_pair_is_ordered_pair, is_ordered_pair.fst_eq,
+        is_ordered_pair.snd_eq, and_self,
+        imp_self_true, true_implies, true_and, hy, *] at h 
+      exact h.left
+    · intro y yin
+      specialize h (x1 ,, y)
+      simp only [is_ordered_pair.ordered_pair_is_ordered_pair, is_ordered_pair.fst_eq,
+        is_ordered_pair.snd_eq, and_self,
+        imp_self_true, true_implies, true_and, hx, *] at h  
+      exact h.right
+  · rintro ⟨xs, ys⟩ z
+    split_ands
+    · exact And.left
+    · rintro ⟨_,h,_⟩
+      simp only [*]
+    · rintro ⟨_,_,h⟩
+      simp only [*]
+    
+/-- Proposition 2
+-/
+
+@[simp] theorem set_product.empty_iff {X Y : o}: X ×ₛ Y = empty_set ↔ (X = empty_set ∨ Y = empty_set) := by
+  rw [empty_set.eq,empty_set.eq,empty_set.eq]
+  rw[← not_and_iff_or_not]
+  apply Iff.cong_not
+  constructor
+  · rintro ⟨y,h⟩
+    simp only [elem] at h
+    constructor
+    · exists proj₁ y
+      simp only [h] 
+    · exists proj₂ y
+      simp only [h] 
+  · rintro ⟨⟨x,hx⟩,⟨y,hy⟩⟩
+    exists (x ,, y)
+    simp[*]
+
+theorem set_product.elim {X Y : o} {p : o → Prop} (h : ∀x, ∀y, x ∈ X → y ∈ Y → p (x ,, y)):
+  ∀a, a ∈ X ×ₛ Y → p a := by
+  intro a ha
+  simp only [elem] at ha 
+  specialize h (proj₁ a) (proj₂ a) (ha.right.left) (ha.right.right)
+  simp only [ha.left, is_ordered_pair.delta] at h 
+  exact h
 
 end WeakSetModel

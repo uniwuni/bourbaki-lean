@@ -650,7 +650,7 @@ theorem empty_set.eq_epsilon_epsilon:
 noncomputable instance sets_sdiff: SDiff o where
   sdiff := set_difference 
 
-noncomputable instance sets_emptycollection: EmptyCollection o where
+@[simp] noncomputable instance sets_emptycollection: EmptyCollection o where
   emptyCollection := empty_set
 
 theorem singleton.inj {x y : o} (h : {x} = ({y} : o)) : x = y := by
