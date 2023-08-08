@@ -8,8 +8,8 @@ section WeakSetModel
 variable {o : Type u}
 variable [WeakSetModel o]
 noncomputable def ordered_pair (x y : o) := unordered_pair {x} (unordered_pair x y)
-@[coe] noncomputable def ordered_pair_uncurry (a : o × o) : o := ordered_pair a.fst a.snd
-noncomputable instance ordered_pair_map: Coe (o × o) o := ⟨ordered_pair_uncurry⟩
+@[coe, inline, simp] noncomputable abbrev ordered_pair_uncurry (a : o × o) : o := ordered_pair a.fst a.snd
+@[inherit_doc] infixl:46 " ,, "   => ordered_pair
 
 
 /-- A3 and Exercise 2a, 2b
@@ -97,42 +97,18 @@ theorem ordered_pair.inj {x x' y y' : o} (h : ordered_pair x y = ordered_pair x'
         simp only [unordered_pair.elem_iff, Or.comm, true_or, singleton.elem_iff, Eq.symm_iff, true_iff] at h9 
         exact h9
 
-@[simp] theorem ordered_pair.eq  {x x' y y' : o} : ((x,y) : o) = (x',y') ↔ (x = x' ∧ y = y') := by
+@[simp] theorem ordered_pair.eq  {x x' y y' : o} : ((x,,y) : o) = (x',,y') ↔ (x = x' ∧ y = y') := by
   constructor
-  · unfold ordered_pair_uncurry
-    intro h
+  · intro h
     have h2 := ordered_pair.inj h
     dsimp at h2 
     exact h2
   · rintro ⟨h1,h2⟩
     simp only [h1,h2]
     
-def is_ordered_pair (z : o) := ∃ x : o, ∃y : o, z = (x,y)
-def OrderedPair := {x : o // is_ordered_pair x}
+def is_ordered_pair (z : o) := ∃ x : o, ∃y : o, z = (x,,y)
 
-noncomputable def OrderedPair.mk (x y : o) : OrderedPair (o := o) := @Subtype.mk _ _ (ordered_pair x y) (by
-  unfold is_ordered_pair ordered_pair ordered_pair_uncurry
-  exists x
-  exists y
-  )
-
-theorem OrderedPair.mk_inj {x y x' y' : o} (h : OrderedPair.mk x y = OrderedPair.mk x' y') : (x = x' ∧ y = y') := by
-  unfold OrderedPair.mk at h
-  have h2 := congrArg Subtype.val h
-  simp only at h2 
-  apply ordered_pair.inj h2
-
-@[coe] noncomputable def ordered_pair_uncurry_type (a : o × o) : OrderedPair (o := o) := OrderedPair.mk a.fst a.snd
-noncomputable instance ordered_pair_pair: Coe (o × o) (OrderedPair (o := o)) := ⟨ordered_pair_uncurry_type⟩
 instance Subtype.value {p : α → Prop}: CoeOut {x : α // p x} α := ⟨Subtype.val⟩
-@[simp] theorem OrderedPair.eq {x x' y y' : o} : ((x,y) : OrderedPair (o := o)) = (x',y') ↔ (x = x' ∧ y = y') := by
-  constructor
-  · intro h
-    apply OrderedPair.mk_inj
-    exact h
-
-  · rintro ⟨h1,h2⟩
-    simp[*]
 
 @[simp] theorem is_ordered_pair.ordered_pair_is_ordered_pair {x y : o} : is_ordered_pair (ordered_pair x y) := by
   exists x
@@ -140,7 +116,7 @@ instance Subtype.value {p : α → Prop}: CoeOut {x : α // p x} α := ⟨Subtyp
 
 
 instance first_projection_is_functional (h : is_ordered_pair z): is_functional_predicate
-  (λ x : o ↦ ∃y : o, z = ((x,y) : o)) where
+  (λ x : o ↦ ∃y : o, z = ((x,,y) : o)) where
   exs := h
   sv := by
     intro a b
@@ -150,7 +126,7 @@ instance first_projection_is_functional (h : is_ordered_pair z): is_functional_p
     rw [yh.1,← yh'.1]
 
 instance second_projection_is_functional (h : is_ordered_pair z): is_functional_predicate
-  (λ y : o ↦ ∃x : o, z = ((x,y) : o)) where
+  (λ y : o ↦ ∃x : o, z = ((x,,y) : o)) where
   exs := by
     rcases h with ⟨a,b,c⟩
     exists b
@@ -163,79 +139,48 @@ instance second_projection_is_functional (h : is_ordered_pair z): is_functional_
     simp only [eq, Eq.symm_iff, ordered_pair.eq] at yh yh' 
     rw [yh.2,← yh'.2]
 
-instance first_projection_is_functional_in_pair {z : OrderedPair}: is_functional_predicate
-  (λ x : o ↦ ∃y : o, z = ((x,y) : OrderedPair (o := o))) where
-  exs := by
-    rcases z with ⟨a,⟨x,y,p⟩⟩
-    exists x
-    exists y
-    simp[ordered_pair_uncurry_type, OrderedPair.mk,p, ordered_pair_uncurry]
-    
-  sv := by
-    intro a b
-    rintro ⟨y,yh⟩ ⟨y',yh'⟩
-    have zh : (↑(a, y) : OrderedPair (o := o)) = (↑(b, y') : OrderedPair) := by rw[← yh, yh']
-    simp only [OrderedPair.eq] at zh 
-    exact zh.left
 
-instance second_projection_is_functional_in_pair (z : OrderedPair): is_functional_predicate
-  (λ y : o ↦ ∃x : o, z = ((x,y) : OrderedPair (o := o))) where
-  exs := by
-    rcases z with ⟨a,⟨x,y,p⟩⟩
-    exists y
-    exists x
-    simp[ordered_pair_uncurry_type, OrderedPair.mk,p, ordered_pair_uncurry]
-    
-  sv := by
-    intro a b
-    rintro ⟨y,yh⟩ ⟨y',yh'⟩
-    have zh : (↑(y,a) : OrderedPair (o := o)) = (↑(y',b) : OrderedPair) := by rw[← yh, yh']
-    simp only [OrderedPair.eq] at zh 
-    exact zh.right
-
-noncomputable def OrderedPair.fst (z : OrderedPair (o := o)) : o := τ (λ x : o ↦ ∃y : o, z = (x,y))
-noncomputable def OrderedPair.snd (z : OrderedPair (o := o)) : o := τ (λ y : o ↦ ∃x : o, z = (x,y))
-@[simp] theorem OrderedPair.exists_eq_iff_fst {z : OrderedPair (o := o)} {x : o}: 
-  (∃y : o, z = (x,y)) ↔ x = z.fst := by
-  unfold fst
+noncomputable def is_ordered_pair.fst (z : o) : o := τ (λ x : o ↦ ∃y : o, z = (x,,y))
+noncomputable def is_ordered_pair.snd (z : o) : o := τ (λ y : o ↦ ∃x : o, z = (x,,y))
+@[simp] theorem OrderedPair.exists_eq_iff_fst {z x : o} (h : is_ordered_pair z): 
+  (∃y : o, z = (x,,y)) ↔ x = is_ordered_pair.fst z := by
+  unfold is_ordered_pair.fst
+  have := first_projection_is_functional h
   rw [Classical.epsilon_eq_iff_of_functional]
 
-@[simp] theorem OrderedPair.exists_eq_iff_snd {z : OrderedPair (o := o)} {y : o}: 
-  (∃x : o, z = (x,y)) ↔ y = z.snd := by
-  unfold snd
+@[simp] theorem OrderedPair.exists_eq_iff_snd {z y : o} (h : is_ordered_pair z): 
+  (∃x : o, z = (x,,y)) ↔ y = is_ordered_pair.snd z := by
+  unfold is_ordered_pair.snd
+  have := second_projection_is_functional h
   rw [Classical.epsilon_eq_iff_of_functional]
+  
 
-theorem eq_ordered_pair_iff (x y z : o) :
-  (z = (x,y)) ↔ (∃ (h : is_ordered_pair z), x = OrderedPair.fst ⟨z,h⟩ ∧ y = OrderedPair.snd ⟨z,h⟩) := by
+theorem is_ordered_pair.eq_iff (x y z : o) :
+  (z = (x,,y)) ↔ (is_ordered_pair z ∧ is_ordered_pair.fst z = x ∧ is_ordered_pair.snd z = y) := by
   constructor
   · intro a
     exists (by
             exists x
             exists y)
-    rw[←OrderedPair.exists_eq_iff_fst, ←OrderedPair.exists_eq_iff_snd]
+    simp only at a 
+    have is_pair := is_ordered_pair.ordered_pair_is_ordered_pair (x := x) (y := y)
+    rw[←a] at is_pair
+    rw[Eq.symm_iff,Eq.symm_iff (y := y)]  
+    rw[←OrderedPair.exists_eq_iff_fst is_pair, ←OrderedPair.exists_eq_iff_snd is_pair]
     constructor
     · exists y
-      simp only [a, Eq.symm_iff]
-      congr
     · exists x
-      simp only [a, Eq.symm_iff]
-      congr
   · rintro ⟨⟨x',y',eq⟩,⟨hx,hy⟩⟩
-    simp only [eq] at hx hy
-    rw[← OrderedPair.exists_eq_iff_fst] at hx
-    rw[← OrderedPair.exists_eq_iff_snd] at hy
+    simp only [eq,Eq.symm_iff] at hx hy
+    rw[← OrderedPair.exists_eq_iff_fst (by simp)] at hx
+    rw[← OrderedPair.exists_eq_iff_snd (z := (↑(x',, y') : o)) (by simp)] at hy
     rcases hx with ⟨y'',hyy⟩
     rcases hy with ⟨x'',hxx⟩
-    unfold ordered_pair_uncurry_type OrderedPair.mk at hxx hyy
-    have hyy' := congrArg Subtype.val hyy
-    have hxx' := congrArg Subtype.val hxx
-    simp only [Eq.symm_iff] at hyy' 
-    simp only [Eq.symm_iff] at hxx' 
-    simp only [ordered_pair_uncurry] at hxx' hyy'
-    have hyy'' := ordered_pair.inj hyy'
-    have hxx'' := ordered_pair.inj hxx'
-    rw [hyy''.left,hxx''.right]
-    assumption
+    simp only [Eq.symm_iff] at hyy  hxx
+    have hyy'' := ordered_pair.inj hyy
+    have hxx'' := ordered_pair.inj hxx
+    rw [hyy''.left,← hxx''.right, eq]
+
 
 theorem Subtype.eq_from_val_eq {p : α → Prop} {x y : {x : α // p x}} (h : x.val = y.val) : x = y := by
   rcases x with ⟨x,hx⟩ 
@@ -249,120 +194,86 @@ theorem Subtype.eq_from_val_eq {p : α → Prop} {x y : {x : α // p x}} (h : x.
   · intro h
     simp[h]
 
-@[simp] theorem OrderedPair.fst_eq (x y : o): ((x,y) : OrderedPair).fst = x := by
-  unfold OrderedPair.fst
-  apply Eq.symm
-  rw [Classical.epsilon_eq_iff_of_functional]
-  exists y
+@[simp] theorem is_ordered_pair.fst_eq (x y : o): is_ordered_pair.fst ((x,,y) : o) = x := by
+  have h2 := is_ordered_pair.eq_iff x y (ordered_pair x y)
+  simp only [ordered_pair_uncurry, is_ordered_pair.ordered_pair_is_ordered_pair, Eq.symm_iff, true_and, true_iff] at h2 
+  simp [h2.left.symm]
 
- @[simp] theorem OrderedPair.snd_eq (x y : o): ((x,y) : OrderedPair).snd = y := by
-  unfold OrderedPair.snd
-  apply Eq.symm
-  rw [Classical.epsilon_eq_iff_of_functional]
-  exists x
+ @[simp] theorem is_ordered_pair.snd_eq (x y : o): is_ordered_pair.snd ((x,,y) : o) = y := by
+  have h2 := is_ordered_pair.eq_iff x y (ordered_pair x y)
+  simp only [ordered_pair_uncurry, is_ordered_pair.ordered_pair_is_ordered_pair, Eq.symm_iff, true_and, true_iff] at h2 
+  simp [h2.right.symm]
 
-@[simp] theorem OrderedPair.delta_special {x y : o}: ((((x,y) : OrderedPair (o := o)).fst, ((x,y) : OrderedPair (o := o)).snd) : OrderedPair (o := o))
-     = ((x,y) : OrderedPair (o := o)) := by
-  simp
+@[simp] theorem is_ordered_pair.delta_special {x y : o}:
+  (is_ordered_pair.fst (ordered_pair x y),, is_ordered_pair.snd (ordered_pair x y)) = ordered_pair x y := by
+  simp only [ordered_pair_uncurry, Eq.symm_iff]
+  congr
+  · simp
+  · simp
+
 
 
 theorem is_ordered_pair.iff_equal_pair_projections {z : o}:
-  ordered_pair (τ λ x : o ↦ ∃y : o, z = ((x,y) : o)) (τ λ y : o ↦ ∃x : o, z = ((x,y) : o)) = z ↔ is_ordered_pair z := by
+  ordered_pair (is_ordered_pair.fst z) (is_ordered_pair.snd z) = z ↔ is_ordered_pair z := by
+  unfold fst snd
   constructor
   · intro h
     rw[← h]
     unfold is_ordered_pair
-    exists (τ λ x : o ↦ ∃y : o, z = ((x,y) : o))
-    exists (τ λ y : o ↦ ∃x : o, z = ((x,y) : o))
+    exists (τ λ x : o ↦ ∃y : o, z = ((x,,y) : o))
+    exists (τ λ y : o ↦ ∃x : o, z = ((x,,y) : o))
   · rintro ⟨x,y,p⟩ 
-    unfold ordered_pair_uncurry at p
     simp only [p, Eq.symm_iff]
     congr
-    · have h3 : is_functional_predicate fun x_1 : o => ∃ y_1 : o, ordered_pair x y = (↑(x_1, y_1) : o)
+    · have h3 : is_functional_predicate fun x_1 : o => ∃ y_1 : o, ordered_pair x y = (x_1,,y_1)
         := first_projection_is_functional (by simp)
-      have h2 := Classical.epsilon_eq_iff_of_functional x (f := fun x_1 : o=> ∃ y_1 : o, ordered_pair x y = (↑(x_1, y_1) : o))
+      have h2 := Classical.epsilon_eq_iff_of_functional x (f := fun x_1 : o=> ∃ y_1 : o, ordered_pair x y = (x_1 ,, y_1))
       rw [h2]
       exists y
          
-    · have h3 : is_functional_predicate fun y_1 : o => ∃ x_1 : o, ordered_pair x y = (↑(x_1, y_1) : o)
+    · have h3 : is_functional_predicate fun y_1 : o => ∃ x_1 : o, ordered_pair x y = (x_1,,y_1)
         := second_projection_is_functional (by simp)
-      have h2 := Classical.epsilon_eq_iff_of_functional y (f := fun y_1 : o => ∃ x_1 : o, ordered_pair x y = (↑(x_1, y_1) : o))
+      have h2 := Classical.epsilon_eq_iff_of_functional y (f := fun y_1 : o => ∃ x_1 : o, ordered_pair x y = (x_1,,y_1))
       rw [h2]
       exists x
 
 noncomputable def uncurry_proposition (r : o → o → Prop) : o → Prop :=
-  λz ↦ ∃x:o,∃y:o, z = ((x,y) : o) ∧ r x y 
-
-noncomputable def uncurry_proposition_pair (r : o → o → Prop) : OrderedPair (o := o) → Prop :=
-  λz ↦ ∃x:o,∃y:o, z = ((x,y) : OrderedPair) ∧ r x y 
-
-theorem uncurry_proposition.iff_uncurry_proposition_pair {r : o → o → Prop} {x : OrderedPair} :
-  uncurry_proposition r (x.val : o) ↔ uncurry_proposition_pair r x := by
-  unfold uncurry_proposition_pair uncurry_proposition
-  apply Iff.cong_exists
-  intro y
-  apply Iff.cong_exists
-  intro z
-  simp[ordered_pair_uncurry_type, ordered_pair_uncurry]
-  apply Iff.cong_andl
-  conv => 
-    right
-    rw[← Subtype.eq_iff_val_eq]
-    
-@[simp] theorem OrderedPair.eq_iff {z1 z2 : OrderedPair (o := o)}: z1 = z2 ↔ ((z1.fst = z2.fst) ∧(z1.snd = z2.snd)) := by
-  constructor
-  · intro h
-    simp[h]
-  · rintro ⟨h1,h2⟩
-    rw[← OrderedPair.exists_eq_iff_fst] at h1
-    rcases h1 with ⟨y, prf⟩ 
-    rw[prf]
-    simp only [prf, OrderedPair.snd_eq, Eq.symm_iff] at h2 
-    rw[← OrderedPair.exists_eq_iff_snd] at h2
-    rcases h2 with ⟨x,prf2⟩
-    simp[prf2]
-       
+  λz ↦ ∃x:o,∃y:o, z = (x,, y) ∧ r x y 
 
 
-@[simp] theorem OrderedPair.delta {z : OrderedPair}: ((z.fst, z.snd) : OrderedPair (o := o))
-     = z := by simp[OrderedPair.eq_iff]
+@[simp] theorem is_ordered_pair.delta {z : o} (h: is_ordered_pair z): (is_ordered_pair.fst z,, is_ordered_pair.snd z) = z
+     := by simp[is_ordered_pair.eq_iff, h]
 
 
   -- [p, Eq.symm_iff] at *
 
   
 
-@[simp] theorem uncurry_proposition_pair.iff_proj {r : o → o → Prop} {z : OrderedPair} :
-  uncurry_proposition_pair r z ↔ r z.fst z.snd := by
-  unfold uncurry_proposition_pair
+@[simp] theorem uncurry_proposition.iff {r : o → o → Prop} {z : o} (h : is_ordered_pair z) :
+  uncurry_proposition r z ↔ r (is_ordered_pair.fst z) (is_ordered_pair.snd z) := by
+  unfold uncurry_proposition
   constructor
   · rintro ⟨x,y,⟨a,b⟩⟩
     simp[a,b]
   · intro a
-    exists z.fst
-    exists z.snd
-    simpa
+    exists (is_ordered_pair.fst z)
+    exists (is_ordered_pair.snd z)
+    simp[h,a]
 
-@[simp] theorem uncurry_proposition_pair.pair {r : o → o → Prop} {x y : o} :
-  uncurry_proposition_pair r (x,y) ↔ r x y := by
-  unfold uncurry_proposition_pair
-  constructor
-  · rintro ⟨x1, y1, ⟨a,b⟩⟩
-    simp only [OrderedPair.eq_iff, OrderedPair.fst_eq, OrderedPair.snd_eq] at a 
-    simp[a.left, a.right, b]
-  · rintro rxy
-    exists x
-    exists y
 
-@[simp] theorem uncurry_proposition_pair.pair_exists {r : o → o → Prop} {x y : o} :
-  (∃ z : OrderedPair, z = (x,y) ∧ uncurry_proposition_pair r z) ↔ r x y := by
+@[simp] theorem uncurry_proposition.pair_iff {r : o → o → Prop} {x y : o} :
+  uncurry_proposition r (x,,y) ↔ r x y := by
+  simp
+
+@[simp] theorem uncurry_proposition.pair_exists {r : o → o → Prop} {x y : o} :
+  (∃ z : o, z = (x,,y) ∧ uncurry_proposition r z) ↔ r x y := by
   constructor
   · rintro ⟨ z, ⟨eq, rp⟩⟩
     rw [eq] at rp
-    simp only [iff_proj, OrderedPair.fst_eq, OrderedPair.snd_eq] at rp 
+    simp only [is_ordered_pair.ordered_pair_is_ordered_pair, iff, is_ordered_pair.fst_eq, is_ordered_pair.snd_eq] at rp 
     exact rp
   · intro rxy
-    exists (x,y)
+    exists (x,,y)
     apply And.intro rfl
     simp [rxy]
 
@@ -371,23 +282,23 @@ theorem uncurry_proposition.iff_uncurry_proposition_pair {r : o → o → Prop} 
 -/
 /-- 1 a
 -/
-@[simp] theorem OrderedPair.exists_relation_of_projection {r : o → o → Prop}:
-  (∃z:OrderedPair, r z.fst z.snd) ↔ (∃x:o,∃y:o, r x y) := by
+@[simp] theorem is_ordered_pair.exists_relation_of_projection {r : o → o → Prop}:
+  (∃z:o, r (fst z) (snd z)) ↔ (∃x:o,∃y:o, r x y) := by
   constructor
   · rintro ⟨z, rz⟩
     exists fst z
     exists snd z
   · rintro ⟨x,y,rxy⟩
-    exists (x,y)
+    exists (x,,y)
     simp [rxy]
 
 /-- 1 b
 -/
-@[simp] theorem OrderedPair.forall_relation_of_projection {r : o → o → Prop}:
-  (∀z:OrderedPair, r z.fst z.snd) ↔ (∀x:o,∀y:o, r x y) := by
+@[simp] theorem is_ordered_pair.forall_relation_of_projection {r : o → o → Prop}:
+  (∀z:o, r (fst z) (snd z))  ↔ (∀x:o,∀y:o, r x y) := by
   constructor
   · intro f x y
-    specialize f (x,y)
+    specialize f (x,,y)
     simp only [fst_eq, snd_eq] at f 
     exact f
   · intro f z
@@ -400,8 +311,8 @@ theorem uncurry_proposition.iff_uncurry_proposition_pair {r : o → o → Prop} 
 /-- Theorem 1
 -/
 theorem product_is_collectivizing (X Y : o):
-  ∃Z:o, ∀z:o, (z ∈ Z ↔ ∃ x, ∃ y, z = ((x,y) : o) ∧ x ∈ X ∧ y ∈ Y) := by
-  let a (y:o) := {((x,y) : o) || x ∈ X}
+  ∃Z:o, ∀z:o, (z ∈ Z ↔ ∃ x, ∃ y, z = (x,,y) ∧ x ∈ X ∧ y ∈ Y) := by
+  let a (y:o) := {(x,,y) || x ∈ X}
   have h2 (y : o) : ∃ A:o, ∀ z:o, z ∈ a y → z ∈ A := by
     exists a y
     simp
@@ -417,7 +328,7 @@ theorem product_is_collectivizing (X Y : o):
     congr
     ext
     rw[← Exists.and_const]
-  rw[Exists.exists_comm (p := λ x x_1 ↦ x ∈ Y ∧ z = ↑(x_1, x) ∧ x_1 ∈ X)]
+  rw[Exists.exists_comm (p := λ x x_1 ↦ x ∈ Y ∧ z = (x_1,, x) ∧ x_1 ∈ X)]
   apply Iff.cong_exists
   intro x
   apply Iff.cong_exists
@@ -425,40 +336,20 @@ theorem product_is_collectivizing (X Y : o):
   simp only [And.comm, And.assoc]
 
 instance is_collectivizing.product_set (X Y : o):
-  is_collectivizing (λ z : o ↦ ∃x : OrderedPair, x.val = z ∧ x.fst ∈ X ∧ x.snd ∈ Y) := by
+  is_collectivizing (λ z : o ↦ is_ordered_pair z ∧ is_ordered_pair.fst z ∈ X ∧ is_ordered_pair.snd z ∈ Y) := by
   constructor
   rcases (product_is_collectivizing X Y) with ⟨prod, prf⟩
   exists prod
   intro x
-  rw[prf x]
+  rw [prf x]
   constructor
-  · rintro ⟨x1,x2,⟨p,x1x,x2y⟩⟩
-    exists (x1, x2)
-    simp only [Eq.symm_iff, OrderedPair.fst_eq, OrderedPair.snd_eq, and_self, and_true]
-    simp[ordered_pair_uncurry,ordered_pair_uncurry_type,OrderedPair.mk, *]
-  · rintro ⟨a, ⟨h1,h2,h3⟩⟩
-    exists a.fst
-    exists a.snd
-    rw[← h1]
-    constructor
-    · have h4 : (↑(OrderedPair.fst a, OrderedPair.snd a) : OrderedPair)
-                = (⟨(↑(OrderedPair.fst a, OrderedPair.snd a) : o), (by simp[ordered_pair_uncurry] )⟩: OrderedPair)
-              := by
-              
-              
-
-
-
+  · rintro ⟨x1,x2,⟨h1,h2,h3⟩⟩
+    simp[h1,h2,h3]
+  · rintro ⟨h1,h2,h3⟩
+    exists is_ordered_pair.fst x
+    exists is_ordered_pair.snd x
+    simp[*]
       
-
-      
-
-
-
-
-
-def product_set (X Y : o) := is_collectivizing.set
-
 
 
 end WeakSetModel
